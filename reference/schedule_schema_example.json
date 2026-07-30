@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "document": {
+    "file_name": "beam_slab_sheet_01.pdf",
+    "page_number": 3
+  },
+  "tables": [
+    {
+      "table_id": "b6f1e6d2-8a2e-4b4b-9a2e-000000000001",
+      "table_type": "beam_schedule",
+      "title_raw": "SCHEDULE OF BEAMS",
+      "source_region_bbox": [40, 120, 560, 340],
+      "header_row_count": 2,
+      "headers": [
+        { "col_index": 0, "raw_header": "Beam Mark", "canonical_field": "beam_mark", "parent_header": null },
+        { "col_index": 1, "raw_header": "Beam Size", "canonical_field": "beam_size", "parent_header": null },
+        { "col_index": 2, "raw_header": "Bars", "canonical_field": "top_reinforcement_bars", "parent_header": "Top Reinforcement" },
+        { "col_index": 3, "raw_header": "Spacing", "canonical_field": "top_reinforcement_spacing", "parent_header": "Top Reinforcement" },
+        { "col_index": 4, "raw_header": "Stirrups", "canonical_field": "stirrups", "parent_header": null },
+        { "col_index": 5, "raw_header": "Remarks", "canonical_field": "remarks", "parent_header": null }
+      ],
+      "rows": [
+        {
+          "row_index": 0,
+          "cells": [
+            { "col_index": 0, "raw_text": "B1", "normalized_value": "B1", "confidence": 0.97 },
+            { "col_index": 1, "raw_text": "230x450", "normalized_value": { "width_mm": 230, "depth_mm": 450 }, "confidence": 0.95 },
+            { "col_index": 2, "raw_text": "4-T20", "normalized_value": { "count": 4, "bar_type": "T20" }, "confidence": 0.90 },
+            { "col_index": 3, "raw_text": "T10@150c/c", "normalized_value": { "bar_type": "T10", "spacing_mm": 150 }, "confidence": 0.88 },
+            { "col_index": 4, "raw_text": "T8@150c/c", "normalized_value": { "bar_type": "T8", "spacing_mm": 150 }, "confidence": 0.88 },
+            { "col_index": 5, "raw_text": "-", "normalized_value": null, "confidence": 0.99 }
+          ]
+        }
+      ]
+    }
+  ],
+  "review": {
+    "status": "pending",
+    "flagged_tables": []
+  }
+}

@@ -1,0 +1,80 @@
+"""
+Locates candidate schedule-table anchors on a PDF page by searching for
+known schedule title keywords (e.g. "SCHEDULE OF BEAMS", "Weight Schedule").
+Each match returns a ScheduleAnchor with the bbox of the title text so
+downstream table-detection modules can search immediately below/around it.
+
+This intentionally does NOT try to detect tables generically across the
+whole page — engineering drawings almost always label their schedules
+with a consistent title convention, so anchoring on that text is far
+more reliable than blind grid-hunting across a busy sheet full of
+layout geometry, notes, and title-block content.
+
+Changes from reference baseline:
+  - Imports patterns from src.utils.constants (single source of truth)
+  - Pre-compiled regex patterns instead of re-compiling per call
+  - Added exclusion patterns (e.g. "REVISION SCHEDULE") to avoid
+    false positives from title-block metadata
+"""
+
+from __future__ import annotations
+from dataclasses import dataclass
+import fitz  # PyMuPDF
+
+from ..utils.constants import SCHEDULE_TITLE_PATTERNS, SCHEDULE_TITLE_EXCLUSIONS
+
+
+@dataclass
+class ScheduleAnchor:
+    table_type: str          # e.g. "beam_schedule", "insert_schedule"
+    matched_text: str        # the raw text PyMuPDF matched
+    bbox: fitz.Rect          # bounding box of the title text itself
+    page_number: int
+
+
+def find_schedule_anchors(page: fitz.Page, page_number: int) -> list[ScheduleAnchor]:
+    """
+    Scans a page's text for schedule-title keywords and returns one
+    ScheduleAnchor per match, each carrying the bbox of the title text
+    so a table-region clipper can search immediately below/around it.
+
+    Uses regex over full-page text blocks rather than exact string
+    search, since spacing/casing varies ("SCHEDULE OF BEAMS" vs
+    "Schedule Of Beams" vs "BEAM SCHEDULE").
+
+    Excludes matches against SCHEDULE_TITLE_EXCLUSIONS (e.g.
+    "REVISION SCHEDULE" in title blocks) to avoid false positives.
+    """
+    anchors: list[ScheduleAnchor] = []
+    blocks = page.get_text("blocks")  # (x0, y0, x1, y1, text, block_no, block_type)
+
+    for block in blocks:
+        # block_type 1 = image block; skip those
+        if block[6] != 0:
+            continue
+
+        x0, y0, x1, y1, text = block[0], block[1], block[2], block[3], block[4]
+        normalized = " ".join(text.split()).lower()
+
+        # Check exclusions first — skip this block entirely if it matches
+        if any(excl.search(normalized) for excl in SCHEDULE_TITLE_EXCLUSIONS):
+            continue
+
+        for table_type, patterns in SCHEDULE_TITLE_PATTERNS.items():
+            matched_pattern = False
+            for pattern in patterns:
+                if pattern.search(normalized):
+                    anchors.append(
+                        ScheduleAnchor(
+                            table_type=table_type,
+                            matched_text=text.strip(),
+                            bbox=fitz.Rect(x0, y0, x1, y1),
+                            page_number=page_number,
+                        )
+                    )
+                    matched_pattern = True
+                    break
+            if matched_pattern:
+                break  # don't let one block match multiple table_types
+
+    return anchors
