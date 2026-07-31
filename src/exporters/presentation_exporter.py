@@ -23,33 +23,53 @@ def _humanize(field_name: str) -> str:
 
 def _flatten_general_notes(table: dict) -> dict:
     """
-    Flattens the general_notes table's nested structure (general_notes /
-    cover / legends / metadata) into one flat label->value dict, plus a
-    separate "flags" list for anything that couldn't be captured as text
-    (e.g. the Erection Mark, which is a drawn symbol with no OCR-able
-    text -- shown as a flag instead of a silent blank value).
+    Flattens the general_notes table into section headings, ordered to
+    match the visual top-to-bottom hierarchy in the source drawing
+    (GENERAL NOTES items, then COVER, then the standalone dimensions
+    note, then LEGENDS) rather than whatever order the underlying data
+    happens to carry:
+
+    - Top-level items (no sub-section) go under "notes" -- reserved as
+      the first key so it always renders first, matching "GENERAL
+      NOTES:" being the top heading in the drawing.
+    - Any nested section (e.g. "cover": {"column": "40mm"}) becomes its
+      OWN heading, appended in the order it appears in the source data
+      -- generalizes to any future sectioned notes, not just "cover".
+    - "additional_notes" (standalone lines with no paired value, e.g.
+      "ALL DIMENSIONS ARE IN MM") comes next, matching where it sits
+      between COVER and LEGENDS in the drawing.
+    - "legends" comes last, matching its position as the final
+      sub-section in the drawing.
+    - Anything that couldn't be captured as text (e.g. the Erection
+      Mark, a drawn symbol with no OCR-able text) keeps a null value in
+      its section, plus is called out explicitly in "flags".
     """
-    flat: dict[str, str | None] = {}
+    result: dict = {"notes": {}}
     unresolved: list[str] = []
+    nested_sections: dict = {}
 
-    notes = table.get("general_notes", {})
-    for key, value in notes.items():
-        if isinstance(value, dict):  # one level of nesting, e.g. "cover": {"column": "40mm"}
-            for sub_key, sub_value in value.items():
-                flat[f"{_humanize(key)} - {_humanize(sub_key)}"] = sub_value
+    for key, value in table.get("general_notes", {}).items():
+        if isinstance(value, dict):  # a nested section -> its own heading, in source order
+            nested_sections[_humanize(key)] = {_humanize(k): v for k, v in value.items()}
         else:
-            flat[_humanize(key)] = value
+            result["notes"][_humanize(key)] = value
 
+    if not result["notes"]:
+        del result["notes"]
+    result.update(nested_sections)
+
+    metadata = table.get("metadata", [])
+    if metadata:
+        result["additional_notes"] = [note.capitalize() for note in metadata]
+
+    legends: dict[str, str | None] = {}
     for key, value in table.get("legends", {}).items():
-        if value:
-            flat[_humanize(key)] = value
-        else:
+        legends[_humanize(key)] = value or None
+        if not value:
             unresolved.append(f"{_humanize(key)} (symbol/icon in source drawing -- not text-extractable)")
+    if legends:
+        result["legends"] = legends
 
-    for note in table.get("metadata", []):
-        flat[note.capitalize()] = None  # standalone note, no associated value
-
-    result = {"notes": flat}
     if unresolved:
         result["flags"] = unresolved
     return result
@@ -127,4 +147,3 @@ if __name__ == "__main__":
             canonical_tables = json.load(f)
 
     print(export_presentation_json(canonical_tables))
-

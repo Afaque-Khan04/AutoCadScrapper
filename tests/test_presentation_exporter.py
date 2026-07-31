@@ -50,8 +50,9 @@ class TestPresentationExporterUnit:
         assert table["name"] == "GENERAL NOTES"
         assert table["type"] == "general_notes"
         assert table["notes"]["Grade Of Concrete"] == "M50"
-        assert table["notes"]["Cover - Column"] == "40mm"
-        assert table["notes"]["All dimensions are in mm"] is None
+        assert table["Cover"]["Column"] == "40mm"
+        assert table["additional_notes"] == ["All dimensions are in mm"]
+        assert table["legends"]["Erection Mark"] is None
         assert any("Erection Mark" in flag for flag in table["flags"])
 
     def test_simplify_schedule_table(self):

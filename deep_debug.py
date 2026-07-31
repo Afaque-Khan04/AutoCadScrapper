@@ -1,4 +1,5 @@
 """Deep diagnostic: find ALL horizontals near table area spanning full page width."""
+# pyrefly: ignore [missing-import]
 import fitz
 
 doc = fitz.open("reference/benchmarkpdf.pdf")
