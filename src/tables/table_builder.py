@@ -34,6 +34,7 @@ from .grid_reconstructor import (
 from .text_clustering import build_text_grid
 from .header_normalizer import normalize_header
 from ..parsing.rebar_notation import parse_rebar_value
+from ..parsing.notes_parser import parse_notes_region
 
 
 HARD_SEARCH_CAP = 900.0          # pts; absolute max vertical search depth
@@ -314,20 +315,15 @@ def build_table_from_anchor(
     page_rect: fitz.Rect,
 ) -> dict | None:
     """
-    Builds a complete table dict from a single anchor:
-      1. Discover the table's actual x-bounds from nearby rulings
-      2. Extract all grid lines within those bounds
-      3. Refine the bottom edge (MAX_ROW_GAP)
-      4. Build grid, extract headers, populate cells
-
-    Uses two strategies in order:
-      A) Vector grid reconstruction (primary) — requires horizontal and
-         vertical ruling lines in the table area.
-      B) Text clustering (fallback) — uses word positions to infer
-         rows/columns when no vector lines exist (benchmark PDF's
-         Insert / Dowel Bar schedules) or the grid has no data rows
-         (Weight Schedule).
+    Builds a complete table dict or notes dict from a single anchor:
+      - If anchor.region_type in ("general_notes", "legend", "specifications"):
+        delegates to parse_notes_region.
+      - Else attempts vector grid reconstruction (primary) or text clustering
+        (fallback).
     """
+    if anchor.region_type in ("general_notes", "legend", "specifications"):
+        return parse_notes_region(page, anchor, page_rect)
+
     # --- Pass 1: discover the table's true boundary ---
     search_region = _discover_table_bounds(page, anchor, page_rect)
 
@@ -451,12 +447,12 @@ def build_table_from_anchor(
 
 
 def extract_all_tables(pdf_path: str) -> list[dict]:
-    """Entry point: opens a PDF, finds every schedule anchor on every
+    """Entry point: opens a PDF, finds every schedule-table anchor on every
     page, and attempts to build a table for each one."""
     doc = fitz.open(pdf_path)
     tables = []
     for page_number, page in enumerate(doc, start=1):
-        for anchor in find_schedule_anchors(page, page_number):
+        for anchor in find_schedule_anchors(page, page_number, include_notes=False):
             table = build_table_from_anchor(page, anchor, page.rect)
             if table:
                 table["page_number"] = page_number
@@ -464,10 +460,23 @@ def extract_all_tables(pdf_path: str) -> list[dict]:
     return tables
 
 
+def extract_all_regions(pdf_path: str) -> list[dict]:
+    """Extracts all regions (schedules, General Notes, Legends, Specifications)."""
+    doc = fitz.open(pdf_path)
+    regions = []
+    for page_number, page in enumerate(doc, start=1):
+        for anchor in find_schedule_anchors(page, page_number, include_notes=True):
+            res = build_table_from_anchor(page, anchor, page.rect)
+            if res:
+                res["page_number"] = page_number
+                regions.append(res)
+    return regions
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python -m src.tables.table_builder <path_to_pdf>")
         sys.exit(1)
 
-    results = extract_all_tables(sys.argv[1])
+    results = extract_all_regions(sys.argv[1])
     print(json.dumps(results, indent=2))

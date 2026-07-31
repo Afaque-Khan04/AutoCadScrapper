@@ -70,6 +70,21 @@ SCHEDULE_TITLE_EXCLUSIONS: list[re.Pattern] = [
     re.compile(r"revision\s+schedule", re.IGNORECASE),
 ]
 
+# ---------------------------------------------------------------------------
+# Non-schedule region title patterns (General Notes, Legends, Specifications)
+# ---------------------------------------------------------------------------
+NOTES_TITLE_PATTERNS: dict[str, list[re.Pattern]] = {
+    "general_notes": [
+        re.compile(r"general\s+notes?:?", re.IGNORECASE),
+    ],
+    "legend": [
+        re.compile(r"legends?:?", re.IGNORECASE),
+    ],
+    "specifications": [
+        re.compile(r"specifications?:?", re.IGNORECASE),
+    ],
+}
+
 
 # ---------------------------------------------------------------------------
 # Header alias dictionary — used by header_normalizer.py

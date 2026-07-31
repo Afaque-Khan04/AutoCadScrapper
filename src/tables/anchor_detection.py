@@ -21,29 +21,30 @@ from __future__ import annotations
 from dataclasses import dataclass
 import fitz  # PyMuPDF
 
-from ..utils.constants import SCHEDULE_TITLE_PATTERNS, SCHEDULE_TITLE_EXCLUSIONS
+from ..utils.constants import (
+    SCHEDULE_TITLE_PATTERNS,
+    SCHEDULE_TITLE_EXCLUSIONS,
+    NOTES_TITLE_PATTERNS,
+)
 
 
 @dataclass
 class ScheduleAnchor:
-    table_type: str          # e.g. "beam_schedule", "insert_schedule"
+    table_type: str          # e.g. "beam_schedule", "insert_schedule", "general_notes"
     matched_text: str        # the raw text PyMuPDF matched
     bbox: fitz.Rect          # bounding box of the title text itself
     page_number: int
+    region_type: str = "schedule"  # "schedule", "general_notes", "legend", "specifications"
 
 
-def find_schedule_anchors(page: fitz.Page, page_number: int) -> list[ScheduleAnchor]:
+def find_schedule_anchors(
+    page: fitz.Page,
+    page_number: int,
+    include_notes: bool = False,
+) -> list[ScheduleAnchor]:
     """
-    Scans a page's text for schedule-title keywords and returns one
-    ScheduleAnchor per match, each carrying the bbox of the title text
-    so a table-region clipper can search immediately below/around it.
-
-    Uses regex over full-page text blocks rather than exact string
-    search, since spacing/casing varies ("SCHEDULE OF BEAMS" vs
-    "Schedule Of Beams" vs "BEAM SCHEDULE").
-
-    Excludes matches against SCHEDULE_TITLE_EXCLUSIONS (e.g.
-    "REVISION SCHEDULE" in title blocks) to avoid false positives.
+    Scans a page's text for schedule-title keywords (and optionally notes-title
+    keywords if include_notes=True) and returns one ScheduleAnchor per match.
     """
     anchors: list[ScheduleAnchor] = []
     blocks = page.get_text("blocks")  # (x0, y0, x1, y1, text, block_no, block_type)
@@ -60,8 +61,9 @@ def find_schedule_anchors(page: fitz.Page, page_number: int) -> list[ScheduleAnc
         if any(excl.search(normalized) for excl in SCHEDULE_TITLE_EXCLUSIONS):
             continue
 
+        matched_block = False
+        # 1. Search structural / precast schedule titles
         for table_type, patterns in SCHEDULE_TITLE_PATTERNS.items():
-            matched_pattern = False
             for pattern in patterns:
                 if pattern.search(normalized):
                     anchors.append(
@@ -70,11 +72,39 @@ def find_schedule_anchors(page: fitz.Page, page_number: int) -> list[ScheduleAnc
                             matched_text=text.strip(),
                             bbox=fitz.Rect(x0, y0, x1, y1),
                             page_number=page_number,
+                            region_type="schedule",
                         )
                     )
-                    matched_pattern = True
+                    matched_block = True
                     break
-            if matched_pattern:
-                break  # don't let one block match multiple table_types
+            if matched_block:
+                break
+
+        if matched_block:
+            continue
+
+        # 2. Search notes / legend titles if enabled
+        if include_notes:
+            for region_type, patterns in NOTES_TITLE_PATTERNS.items():
+                for pattern in patterns:
+                    if pattern.search(normalized):
+                        anchors.append(
+                            ScheduleAnchor(
+                                table_type=region_type,
+                                matched_text=text.strip(),
+                                bbox=fitz.Rect(x0, y0, x1, y1),
+                                page_number=page_number,
+                                region_type=region_type,
+                            )
+                        )
+                        matched_block = True
+                        break
+                if matched_block:
+                    break
 
     return anchors
+
+
+def find_all_anchors(page: fitz.Page, page_number: int) -> list[ScheduleAnchor]:
+    """Scans page for both schedule and non-schedule (General Notes / Legend) anchors."""
+    return find_schedule_anchors(page, page_number, include_notes=True)
