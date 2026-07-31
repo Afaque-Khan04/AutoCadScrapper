@@ -77,8 +77,9 @@ def _discover_notes_bounds(
                     exclusion_y = b[1]
 
     # 2. Horizontal lines around anchor
-    h_above = [y for y, x0, x1 in h_lines if y <= anchor.bbox.y1 + 15 and x0 - 30 <= anchor.bbox.x0 <= x1 + 30]
-    top_y = min(h_above) if h_above else max(page_rect.y0, anchor.bbox.y0 - 10)
+    # Top line IMMEDIATELY above anchor (max y <= anchor.bbox.y0 + 5)
+    h_above = [y for y, x0, x1 in h_lines if y <= anchor.bbox.y0 + 5 and x0 - 30 <= anchor.bbox.x0 <= x1 + 30]
+    top_y = max(h_above) if h_above else max(page_rect.y0, anchor.bbox.y0 - 10)
 
     h_below = [y for y, x0, x1 in h_lines if anchor.bbox.y1 < y < exclusion_y and (x0 - 30 <= anchor.bbox.x0 <= x1 + 30)]
     bottom_y = max(h_below) if h_below else min(exclusion_y - 5, anchor.bbox.y1 + DEFAULT_SEARCH_DEPTH)
@@ -92,10 +93,10 @@ def _discover_notes_bounds(
     x_right = min(right_verts) if right_verts else min(page_rect.x1, anchor.bbox.x1 + 200)
 
     return fitz.Rect(
-        x_left - PADDING,
-        top_y - PADDING,
-        x_right + PADDING,
-        bottom_y + PADDING,
+        x_left + 2,
+        top_y + 2,
+        x_right - 2,
+        bottom_y - 2,
     )
 
 

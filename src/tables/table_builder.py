@@ -461,15 +461,26 @@ def extract_all_tables(pdf_path: str) -> list[dict]:
 
 
 def extract_all_regions(pdf_path: str) -> list[dict]:
-    """Extracts all regions (schedules, General Notes, Legends, Specifications)."""
+    """Extracts all regions (schedules, General Notes, Legends, Specifications).
+    Prevents duplicate extraction of sub-anchors (like LEGENDS inside General Notes)."""
     doc = fitz.open(pdf_path)
     regions = []
     for page_number, page in enumerate(doc, start=1):
+        processed_bboxes: list[list[float]] = []
         for anchor in find_schedule_anchors(page, page_number, include_notes=True):
+            cx = (anchor.bbox.x0 + anchor.bbox.x1) / 2
+            cy = (anchor.bbox.y0 + anchor.bbox.y1) / 2
+
+            # Skip if anchor center falls inside an already-extracted panel
+            if any(b[0] <= cx <= b[2] and b[1] <= cy <= b[3] for b in processed_bboxes):
+                continue
+
             res = build_table_from_anchor(page, anchor, page.rect)
             if res:
                 res["page_number"] = page_number
                 regions.append(res)
+                if "source_region_bbox" in res:
+                    processed_bboxes.append(res["source_region_bbox"])
     return regions
 
 
