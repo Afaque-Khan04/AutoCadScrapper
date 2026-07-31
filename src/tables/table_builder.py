@@ -11,14 +11,12 @@ Table-bounds discovery strategy (replaces the earlier "page-width clip"):
   2. Identify the topmost horizontal ruling — this is the table's top
      edge.
   3. Find every vertical ruling that physically TOUCHES that top
-     horizontal (within tolerance) — their outermost positions give the
-     table's true left and right edges.
-  4. With the correct x-bounds locked, do a full vertical search
+     horizontal (within tolerance).
+  4. Bracket x-bounds to the nearest verticals INSIDE the anchor's
+     left/right extent — this correctly isolates each schedule's columns
+     when multiple tables sit side-by-side sharing a common top horizontal.
+  5. With the correct x-bounds locked, do a full vertical search
      (MAX_ROW_GAP bottom-trim) within those bounds.
-
-This naturally handles side-by-side schedules (e.g. benchmark PDF's
-Weight / Insert / Dowel Bar schedules) because verticals belonging to
-an adjacent table won't touch this table's top horizontal.
 """
 
 from __future__ import annotations
@@ -30,9 +28,10 @@ import fitz
 
 from .anchor_detection import find_schedule_anchors, ScheduleAnchor
 from .grid_reconstructor import (
-    GridLine, extract_grid_lines, build_grid,
+    GridLine, extract_grid_lines, build_grid, build_cell_rects, TableGrid,
     detect_merged_header_cells, COLLINEAR_MERGE_TOLERANCE,
 )
+from .text_clustering import build_text_grid
 from .header_normalizer import normalize_header
 from ..parsing.rebar_notation import parse_rebar_value
 
@@ -44,6 +43,13 @@ INITIAL_MIN_WIDTH = 200.0        # pts; minimum corridor width (handles short ti
 BOUNDS_PADDING = 5.0             # pts; small padding around discovered x-bounds
 TOUCH_TOLERANCE = 3.0            # pts; how close a vertical must be to a horizontal's span
 MAX_ROW_GAP = 40.0               # pts; gap > this between consecutive horizontals = end of table
+
+# Text-only fallback constants (used when no vector rulings exist)
+TEXT_FALLBACK_LEFT_MARGIN = 0.7   # multiplier: margin left of anchor = anchor_width × this
+TEXT_FALLBACK_RIGHT_MARGIN = 0.7  # multiplier: margin right of anchor = anchor_width × this
+TEXT_FALLBACK_MIN_MARGIN = 40.0   # pts; minimum margin on each side
+MIN_REGION_WIDTH = 30.0           # pts; region narrower than this is likely not a real table
+ANCHOR_PROXIMITY_MULTIPLIER = 1.2 # multiplier: keep cols within anchor_center ± width × this
 
 # Canonical fields whose cells should be parsed as rebar notation.
 _REBAR_FIELDS = {
@@ -77,9 +83,12 @@ def _discover_table_bounds(
          initial ruling lines.
       2. Find the topmost horizontal ruling — this is the table top.
       3. Find verticals that physically touch that top horizontal
-         (connectivity check) — their outermost positions give the
-         table's left and right edges.
-      4. With x-bounds locked, return a region extending downward for
+         (connectivity check).
+      4. Bracket x-bounds to the nearest verticals INSIDE the anchor's
+         left/right extent — this correctly isolates each schedule's
+         columns when multiple tables sit side-by-side sharing a common
+         top horizontal.
+      5. With x-bounds locked, return a region extending downward for
          full grid extraction.
     """
     # --- Pass 1: corridor scan around the anchor ---
@@ -128,9 +137,27 @@ def _discover_table_bounds(
         x_left = top_h.start
         x_right = top_h.end
     else:
-        # --- Step 4: outermost connected verticals = table x-bounds ---
-        x_left = min(v.position for v in connected_verts)
-        x_right = max(v.position for v in connected_verts)
+        # --- Step 4: bracket x-bounds around anchor's x-extent ---
+        # For side-by-side schedules, the top horizontal often spans ALL
+        # tables and ALL verticals touch it, so using outermost verticals
+        # gives the shared combined bounds across all tables.
+        # Instead, find the nearest vertical to the LEFT of the anchor's
+        # left edge and the nearest vertical to the RIGHT of the anchor's
+        # right edge — this correctly isolates each schedule's columns.
+        anchor_x0 = anchor.bbox.x0
+        anchor_x1 = anchor.bbox.x1
+
+        left_verts = [v for v in connected_verts if v.position < anchor_x0 + TOUCH_TOLERANCE]
+        right_verts = [v for v in connected_verts if v.position > anchor_x1 - TOUCH_TOLERANCE]
+
+        if left_verts and right_verts:
+            # Innermost pair bracketing the anchor
+            x_left = max(v.position for v in left_verts)
+            x_right = min(v.position for v in right_verts)
+        else:
+            # Fallback: outermost verticals (single table or edge case)
+            x_left = min(v.position for v in connected_verts)
+            x_right = max(v.position for v in connected_verts)
 
     # --- Step 5: return bounded region ---
     # Start from the table top (which may be above the anchor title)
@@ -209,6 +236,11 @@ def _extract_headers(page: fitz.Page, grid, header_row_count: int = 1) -> list[d
     Extracts header text from the first header_row_count row(s) of
     the grid, normalizes each header to a canonical field name.
 
+    Handles narrow header bands (e.g. Weight Schedule in the benchmark
+    PDF) where header text may overflow the first row's boundaries.
+    If a column's first-pass header is empty, performs an expanded
+    vertical search covering the first two grid rows.
+
     Returns a list of header dicts matching the schema:
     [{"col_index": 0, "raw_header": "Ref No.", "canonical_field": "ref_no", "parent_header": None}, ...]
     """
@@ -216,12 +248,26 @@ def _extract_headers(page: fitz.Page, grid, header_row_count: int = 1) -> list[d
     headers = []
 
     for c in range(n_cols):
+        # Primary: use the strict first-row cell
+        header_top = grid.row_positions[0]
+        header_bottom = grid.row_positions[min(header_row_count, len(grid.row_positions) - 1)]
         header_cell = fitz.Rect(
-            grid.col_positions[c], grid.row_positions[0],
-            grid.col_positions[c + 1],
-            grid.row_positions[min(header_row_count, len(grid.row_positions) - 1)],
+            grid.col_positions[c], header_top,
+            grid.col_positions[c + 1], header_bottom,
         )
         raw_header = extract_cell_text(page, header_cell).strip()
+
+        # Fallback: if empty, expand vertically into the second row
+        # This handles narrow header bands where text overflows the
+        # first row cell boundary (e.g. Weight Schedule's "Volume" / "Weight")
+        if not raw_header and len(grid.row_positions) > 2:
+            expanded = fitz.Rect(
+                grid.col_positions[c], header_top - 3,
+                grid.col_positions[c + 1],
+                grid.row_positions[min(2, len(grid.row_positions) - 1)],
+            )
+            raw_header = extract_cell_text(page, expanded).strip()
+
         canonical = normalize_header(raw_header)
         headers.append({
             "col_index": c,
@@ -237,6 +283,31 @@ def _extract_headers(page: fitz.Page, grid, header_row_count: int = 1) -> list[d
 # Table assembly
 # ---------------------------------------------------------------------------
 
+def _estimate_text_region(
+    anchor: ScheduleAnchor,
+    page_rect: fitz.Rect,
+) -> fitz.Rect:
+    """
+    Estimates a search region for text-only tables based on the anchor
+    title position. Used as a fallback when no vector ruling lines are
+    found near the anchor.
+
+    The estimated table width is derived from the anchor title width,
+    centered on the anchor's position. The vertical extent starts just
+    below the title and extends down by HARD_SEARCH_CAP.
+    """
+    anchor_w = anchor.bbox.x1 - anchor.bbox.x0
+    margin_left = max(anchor_w * TEXT_FALLBACK_LEFT_MARGIN, TEXT_FALLBACK_MIN_MARGIN)
+    margin_right = max(anchor_w * TEXT_FALLBACK_RIGHT_MARGIN, TEXT_FALLBACK_MIN_MARGIN)
+
+    return fitz.Rect(
+        max(page_rect.x0, anchor.bbox.x0 - margin_left),
+        max(page_rect.y0, anchor.bbox.y1),
+        min(page_rect.x1, anchor.bbox.x1 + margin_right),
+        min(page_rect.y1, anchor.bbox.y1 + HARD_SEARCH_CAP),
+    )
+
+
 def build_table_from_anchor(
     page: fitz.Page,
     anchor: ScheduleAnchor,
@@ -248,20 +319,87 @@ def build_table_from_anchor(
       2. Extract all grid lines within those bounds
       3. Refine the bottom edge (MAX_ROW_GAP)
       4. Build grid, extract headers, populate cells
+
+    Uses two strategies in order:
+      A) Vector grid reconstruction (primary) — requires horizontal and
+         vertical ruling lines in the table area.
+      B) Text clustering (fallback) — uses word positions to infer
+         rows/columns when no vector lines exist (benchmark PDF's
+         Insert / Dowel Bar schedules) or the grid has no data rows
+         (Weight Schedule).
     """
     # --- Pass 1: discover the table's true boundary ---
     search_region = _discover_table_bounds(page, anchor, page_rect)
+
+    # If no vector lines found, or the region is too narrow to be a real
+    # table (e.g. drawing detail elements), fall back to text-only
+    # estimation from the anchor position.
+    use_text_only = False
     if search_region is None:
-        return None
+        use_text_only = True
+    elif search_region.x1 - search_region.x0 < MIN_REGION_WIDTH:
+        use_text_only = True
 
-    # --- Pass 2: full extraction within discovered bounds ---
-    raw_lines = extract_grid_lines(page, search_region)
-    region, lines = refine_region_bottom(search_region, raw_lines)
-    grid = build_grid(lines)
+    if use_text_only:
+        search_region = _estimate_text_region(anchor, page_rect)
+        text_grid = build_text_grid(page, search_region)
+        if text_grid is not None and len(text_grid.row_positions) >= 3:
+            # Filter columns by proximity to anchor to prevent
+            # cross-contamination from adjacent schedules.
+            # Only keep columns whose midpoint is within
+            # ANCHOR_PROXIMITY_MULTIPLIER × anchor_width of the
+            # anchor center.
+            grid = text_grid
+            anchor_cx = (anchor.bbox.x0 + anchor.bbox.x1) / 2
+            anchor_w = anchor.bbox.x1 - anchor.bbox.x0
+            max_dist = anchor_w * ANCHOR_PROXIMITY_MULTIPLIER
 
-    if grid is None:
-        # TODO (Phase 3): fall back to text_clustering
-        return None
+            n_orig_cols = len(grid.col_positions) - 1
+            keep = [False] * n_orig_cols
+            for c in range(n_orig_cols):
+                col_mid = (grid.col_positions[c] + grid.col_positions[c + 1]) / 2
+                if abs(col_mid - anchor_cx) <= max_dist:
+                    keep[c] = True
+
+            if not any(keep):
+                return None
+
+            filtered_cols = [grid.col_positions[0]]
+            for c in range(n_orig_cols):
+                if keep[c]:
+                    filtered_cols.append(grid.col_positions[c + 1])
+
+            if len(filtered_cols) >= 3:
+                # Rebuild grid with filtered columns
+                n_cols_filtered = len(filtered_cols) - 1
+                cells = build_cell_rects(grid.row_positions, filtered_cols)
+                grid = TableGrid(
+                    row_positions=grid.row_positions,
+                    col_positions=filtered_cols,
+                    cells=cells,
+                )
+
+            region = search_region
+            lines = []
+        else:
+            return None
+    else:
+        # --- Pass 2: full extraction within discovered bounds ---
+        raw_lines = extract_grid_lines(page, search_region)
+        region, lines = refine_region_bottom(search_region, raw_lines)
+        grid = build_grid(lines)
+
+        if grid is None or len(grid.row_positions) < 3:
+            # Grid found only header band (no data rows). Try
+            # text clustering for the data rows.
+            text_grid = build_text_grid(page, search_region)
+            if text_grid is not None and len(text_grid.row_positions) >= 3:
+                grid = text_grid
+                raw_lines = extract_grid_lines(page, search_region)
+                _, lines = refine_region_bottom(search_region, raw_lines)
+
+        if grid is None or len(grid.row_positions) < 2 or len(grid.col_positions) < 2:
+            return None
 
     detect_merged_header_cells(grid, lines, header_row_count=1)
 

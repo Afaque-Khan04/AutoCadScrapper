@@ -95,6 +95,29 @@ def _flatten_cluster(cluster: list[GridLine], orientation: str) -> GridLine:
     return GridLine(orientation, avg_position, start, end)
 
 
+def build_cell_rects(
+    row_positions: list[float],
+    col_positions: list[float],
+) -> list[fitz.Rect]:
+    """
+    Shared helper: builds a flat list of cell rectangles from grid
+    row and column boundary positions. Used by both vector grid
+    reconstruction and text clustering to avoid duplicating the
+    nested loop logic.
+
+    Returns one Rect per cell in row-major order:
+       cells[r * n_cols + c] = rect for row r, column c
+    """
+    cells: list[fitz.Rect] = []
+    for r in range(len(row_positions) - 1):
+        for c in range(len(col_positions) - 1):
+            cells.append(fitz.Rect(
+                col_positions[c], row_positions[r],
+                col_positions[c + 1], row_positions[r + 1],
+            ))
+    return cells
+
+
 def build_grid(lines: list[GridLine]) -> TableGrid | None:
     """
     Turns classified/merged grid lines into row and column positions,
@@ -108,14 +131,7 @@ def build_grid(lines: list[GridLine]) -> TableGrid | None:
     if len(row_positions) < 2 or len(col_positions) < 2:
         return None
 
-    cells: list[fitz.Rect] = []
-    for r in range(len(row_positions) - 1):
-        for c in range(len(col_positions) - 1):
-            cells.append(fitz.Rect(
-                col_positions[c], row_positions[r],
-                col_positions[c + 1], row_positions[r + 1],
-            ))
-
+    cells = build_cell_rects(row_positions, col_positions)
     return TableGrid(row_positions=row_positions, col_positions=col_positions, cells=cells)
 
 
