@@ -113,10 +113,18 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python -m src.exporters.presentation_exporter <path_to_canonical_json>")
+        print("Usage: python -m src.exporters.presentation_exporter <path_to_pdf_or_canonical_json>")
         sys.exit(1)
 
-    with open(sys.argv[1], encoding="utf-8") as f:
-        canonical_tables = json.load(f)
+    target = sys.argv[1]
+    if target == "-":
+        canonical_tables = json.load(sys.stdin)
+    elif target.lower().endswith(".pdf"):
+        from src.tables.table_builder import extract_all_regions
+        canonical_tables = extract_all_regions(target)
+    else:
+        with open(target, encoding="utf-8") as f:
+            canonical_tables = json.load(f)
 
     print(export_presentation_json(canonical_tables))
+
