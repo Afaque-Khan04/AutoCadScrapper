@@ -76,7 +76,7 @@ Recon.         Fallback                   └───────┬───�
 
 ## Current Status & Achievements
 
-- **Test Suite**: **90/90 unit & integration tests passing** (`pytest tests/`).
+- **Test Suite**: **94/94 unit & integration tests passing** (`pytest tests/`).
 - **Benchmark Execution**: Tested against `reference/benchmarkpdf.pdf`. Produces 4 non-overlapping regions:
   1. `general_notes`:
      - `grade_of_concrete`: `"M50"`
@@ -103,6 +103,9 @@ d:\Workspace\ACS\AutoCadScrapper\
 │   └── benchmarkpdf.pdf            # Benchmark test PDF
 ├── src/
 │   ├── __init__.py
+│   ├── exporters/
+│   │   ├── __init__.py
+│   │   └── presentation_exporter.py # Simplified reviewer presentation JSON exporter
 │   ├── models/
 │   │   └── __init__.py             # Dataclasses (TableGrid, ScheduleAnchor, etc.)
 │   ├── parsing/
@@ -124,9 +127,10 @@ d:\Workspace\ACS\AutoCadScrapper\
     ├── test_grid_reconstructor.py  # 8 tests
     ├── test_header_normalizer.py   # 12 tests
     ├── test_notes_parser.py        # 6 tests
-    ├── test_rebar_notation.py      # 12 tests
+    ├── test_presentation_exporter.py # 4 tests
+    ├── test_rebar_notation.py      # 18 tests
     ├── test_table_builder.py       # 9 integration tests
-    └── test_text_clustering.py     # 18 tests
+    └── test_text_clustering.py     # 20 tests
 ```
 
 ---
