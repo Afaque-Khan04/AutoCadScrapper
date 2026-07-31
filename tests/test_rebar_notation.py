@@ -47,6 +47,26 @@ class TestParseSingleGroup:
         result = _parse_single_group("6\u00d8130C/C")
         assert result == {"diameter_mm": 6, "spacing_mm": 130}
 
+    def test_count_dash_diameter_dia_text(self):
+        """Dia text notation: 2-16 Dia -> count=2, diameter_mm=16"""
+        result = _parse_single_group("2-16 Dia")
+        assert result == {"count": 2, "diameter_mm": 16}
+
+    def test_standalone_dia_text(self):
+        """Standalone Dia text: 75 Dia -> diameter_mm=75"""
+        result = _parse_single_group("75 Dia")
+        assert result == {"diameter_mm": 75}
+
+    def test_standalone_mm_text(self):
+        """Standalone mm text: 25 mm -> diameter_mm=25"""
+        result = _parse_single_group("25 mm")
+        assert result == {"diameter_mm": 25}
+
+    def test_decimal_diameter(self):
+        """Decimal diameter: 12.9Ø -> diameter_mm=12.9"""
+        result = _parse_single_group("12.9Ø")
+        assert result == {"diameter_mm": 12.9}
+
     def test_empty_string(self):
         assert _parse_single_group("") is None
 

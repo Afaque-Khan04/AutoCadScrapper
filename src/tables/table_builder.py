@@ -56,7 +56,7 @@ ANCHOR_PROXIMITY_MULTIPLIER = 1.2 # multiplier: keep cols within anchor_center Â
 _REBAR_FIELDS = {
     "top_reinforcement", "bottom_reinforcement", "straight_bars",
     "bent_bars", "stirrups", "main_reinforcement", "distribution_bars",
-    "spacing",
+    "spacing", "bar_diameter",
 }
 
 

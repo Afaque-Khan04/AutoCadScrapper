@@ -178,10 +178,10 @@ def _build_column_grid(rows: list[TextRow]) -> list[float] | None:
     Aligns cell boundaries across all rows to build a consistent set of
     column x-positions for the table.
 
-    Strategy: Collect cell boundary positions from each row, then find
-    the row with the most columns and average boundaries across matching
-    rows. Returns sorted list of column x-positions (left edge, dividers,
-    right edge), or None if alignment fails.
+    Strategy: Collect cell boundary positions from each row, placing column
+    dividers at the midpoints of horizontal gaps between adjacent cell clusters.
+    Returns sorted list of column x-positions (left edge, dividers, right edge),
+    or None if alignment fails.
     """
     if not rows:
         return None
@@ -192,10 +192,11 @@ def _build_column_grid(rows: list[TextRow]) -> list[float] | None:
         groups = _cluster_cells_in_row(row)
         if len(groups) < 2:
             continue
-        boundaries = []
-        for group in groups:
-            boundaries.append(min(w["x0"] for w in group))
-        # Add the right edge of the last group
+        boundaries = [min(w["x0"] for w in groups[0])]
+        for i in range(1, len(groups)):
+            prev_right = max(w["x1"] for w in groups[i - 1])
+            curr_left = min(w["x0"] for w in groups[i])
+            boundaries.append((prev_right + curr_left) / 2)
         boundaries.append(max(w["x1"] for w in groups[-1]))
         all_boundaries.append(boundaries)
 
@@ -205,16 +206,15 @@ def _build_column_grid(rows: list[TextRow]) -> list[float] | None:
     # Use the row with the most columns as the reference
     ref_boundaries = max(all_boundaries, key=lambda b: len(b))
 
-    # Average all boundary sets that have similar column counts
-    # (within 1) to get stable positions
+    # Average all boundary sets that have the exact same column count to get stable positions
     ref_col_count = len(ref_boundaries)
-    matching = [b for b in all_boundaries if abs(len(b) - ref_col_count) <= 1]
+    matching = [b for b in all_boundaries if len(b) == ref_col_count]
 
     if not matching:
         matching = [ref_boundaries]
 
     # Average the column positions
-    n_cols = max(len(b) for b in matching)
+    n_cols = len(ref_boundaries)
     avg_boundaries = []
     for c in range(n_cols):
         vals = [b[c] for b in matching if c < len(b)]
