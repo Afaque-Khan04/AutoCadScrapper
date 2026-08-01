@@ -1,0 +1,469 @@
+[
+  {
+    "table_type": "general_notes",
+    "region_type": "general_notes",
+    "title_raw": "GENERAL NOTES:\nGENERAL NOTES:",
+    "source_region_bbox": [
+      953.1728515625,
+      69.90206909179688,
+      1161.547119140625,
+      408.307861328125
+    ],
+    "general_notes": {
+      "grade_of_concrete": "M50",
+      "grade_of_steel": "Fe500",
+      "stripping_strength": "M25",
+      "liftingtransportation_and_erection": "M35",
+      "cover": {
+        "column": "40mm"
+      }
+    },
+    "legends": {
+      "erection_mark": ""
+    },
+    "metadata": [
+      "ALL DIMENSIONS ARE IN MM"
+    ],
+    "page_number": 1
+  },
+  {
+    "table_type": "weight_schedule",
+    "title_raw": "Weight Schedule",
+    "source_region_bbox": [
+      44.5926513671875,
+      738.0960693359375,
+      153.92355346679688,
+      756.7
+    ],
+    "row_count": 1,
+    "col_count": 2,
+    "header_row_index": 0,
+    "headers": [
+      {
+        "col_index": 0,
+        "raw_header": "Volume",
+        "canonical_field": "volume",
+        "parent_header": null
+      },
+      {
+        "col_index": 1,
+        "raw_header": "Weight",
+        "canonical_field": "weight",
+        "parent_header": null
+      }
+    ],
+    "merged_header_cells": [
+      {
+        "bbox": [
+          49.5926513671875,
+          741.1963500976562,
+          153.54806518554688,
+          754.8114318847656
+        ],
+        "merge_type": "horizontal"
+      }
+    ],
+    "rows": [
+      {
+        "row_index": 0,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "1.39 m³",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              49.5926513671875,
+              754.8114318847656,
+              98.37067604064941,
+              768.426513671875
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "3486.65 kg",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              98.37067604064941,
+              754.8114318847656,
+              153.54806518554688,
+              768.426513671875
+            ]
+          }
+        ]
+      }
+    ],
+    "page_number": 1
+  },
+  {
+    "table_type": "insert_schedule",
+    "title_raw": "Insert Schedule",
+    "source_region_bbox": [
+      188.1886413574219,
+      733.0556640625,
+      354.92286987304686,
+      841.7999877929688
+    ],
+    "row_count": 3,
+    "col_count": 3,
+    "header_row_index": 0,
+    "headers": [
+      {
+        "col_index": 0,
+        "raw_header": "Ref No.",
+        "canonical_field": "ref_no",
+        "parent_header": null
+      },
+      {
+        "col_index": 1,
+        "raw_header": "Type",
+        "canonical_field": "type",
+        "parent_header": null
+      },
+      {
+        "col_index": 2,
+        "raw_header": "Count",
+        "canonical_field": "count",
+        "parent_header": null
+      }
+    ],
+    "merged_header_cells": [
+      {
+        "bbox": [
+          187.7740707397461,
+          741.1963500976562,
+          321.52724838256836,
+          754.8114318847656
+        ],
+        "merge_type": "horizontal"
+      },
+      {
+        "bbox": [
+          221.5592441558838,
+          741.1963500976562,
+          349.65162658691406,
+          754.8114318847656
+        ],
+        "merge_type": "horizontal"
+      }
+    ],
+    "rows": [
+      {
+        "row_index": 0,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N1",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              187.7740707397461,
+              754.8114318847656,
+              221.5592441558838,
+              768.3930358886719
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "12.9Ø- LIFTING",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              221.5592441558838,
+              754.8114318847656,
+              321.52724838256836,
+              768.3930358886719
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "2",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              321.52724838256836,
+              754.8114318847656,
+              349.65162658691406,
+              768.3930358886719
+            ]
+          }
+        ]
+      },
+      {
+        "row_index": 1,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N2",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              187.7740707397461,
+              768.3930358886719,
+              221.5592441558838,
+              781.9746398925781
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "12.9Ø- DEMOULDING",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              221.5592441558838,
+              768.3930358886719,
+              321.52724838256836,
+              781.9746398925781
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "4",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              321.52724838256836,
+              768.3930358886719,
+              349.65162658691406,
+              781.9746398925781
+            ]
+          }
+        ]
+      },
+      {
+        "row_index": 2,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N4B",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              187.7740707397461,
+              781.9746398925781,
+              221.5592441558838,
+              795.5897216796875
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "75 Dia Dowel Tube",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              221.5592441558838,
+              781.9746398925781,
+              321.52724838256836,
+              795.5897216796875
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "16",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              321.52724838256836,
+              781.9746398925781,
+              349.65162658691406,
+              795.5897216796875
+            ]
+          }
+        ]
+      }
+    ],
+    "page_number": 1
+  },
+  {
+    "table_type": "dowel_bar_schedule",
+    "title_raw": "Dowel Bar Schedule",
+    "source_region_bbox": [
+      344.3780975341797,
+      733.0556640625,
+      561.7707977294922,
+      841.7999877929688
+    ],
+    "row_count": 3,
+    "col_count": 3,
+    "header_row_index": 0,
+    "headers": [
+      {
+        "col_index": 0,
+        "raw_header": "Ref No",
+        "canonical_field": "ref_no",
+        "parent_header": null
+      },
+      {
+        "col_index": 1,
+        "raw_header": "Bar Diameter",
+        "canonical_field": "bar_diameter",
+        "parent_header": null
+      },
+      {
+        "col_index": 2,
+        "raw_header": "Count",
+        "canonical_field": "count",
+        "parent_header": null
+      }
+    ],
+    "merged_header_cells": [
+      {
+        "bbox": [
+          382.4627990722656,
+          741.1963500976562,
+          483.6799736022949,
+          754.8114318847656
+        ],
+        "merge_type": "horizontal"
+      },
+      {
+        "bbox": [
+          413.7576026916504,
+          741.1963500976562,
+          512.8685989379883,
+          754.8114318847656
+        ],
+        "merge_type": "horizontal"
+      }
+    ],
+    "rows": [
+      {
+        "row_index": 0,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N7",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              382.4627990722656,
+              754.8114318847656,
+              413.7576026916504,
+              768.3930358886719
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "25 mm",
+            "confidence": 1.0,
+            "normalized_value": [
+              {
+                "diameter_mm": 25
+              }
+            ],
+            "bbox": [
+              413.7576026916504,
+              754.8114318847656,
+              483.6799736022949,
+              768.3930358886719
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "8",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              483.6799736022949,
+              754.8114318847656,
+              512.8685989379883,
+              768.3930358886719
+            ]
+          }
+        ]
+      },
+      {
+        "row_index": 1,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N8",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              382.4627990722656,
+              768.3930358886719,
+              413.7576026916504,
+              781.9746398925781
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "32 mm",
+            "confidence": 1.0,
+            "normalized_value": [
+              {
+                "diameter_mm": 32
+              }
+            ],
+            "bbox": [
+              413.7576026916504,
+              768.3930358886719,
+              483.6799736022949,
+              781.9746398925781
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "4",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              483.6799736022949,
+              768.3930358886719,
+              512.8685989379883,
+              781.9746398925781
+            ]
+          }
+        ]
+      },
+      {
+        "row_index": 2,
+        "cells": [
+          {
+            "col_index": 0,
+            "raw_text": "N9",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              382.4627990722656,
+              781.9746398925781,
+              413.7576026916504,
+              795.5897216796875
+            ]
+          },
+          {
+            "col_index": 1,
+            "raw_text": "25 mm",
+            "confidence": 1.0,
+            "normalized_value": [
+              {
+                "diameter_mm": 25
+              }
+            ],
+            "bbox": [
+              413.7576026916504,
+              781.9746398925781,
+              483.6799736022949,
+              795.5897216796875
+            ]
+          },
+          {
+            "col_index": 2,
+            "raw_text": "4",
+            "confidence": 1.0,
+            "normalized_value": null,
+            "bbox": [
+              483.6799736022949,
+              781.9746398925781,
+              512.8685989379883,
+              795.5897216796875
+            ]
+          }
+        ]
+      }
+    ],
+    "page_number": 1
+  }
+]

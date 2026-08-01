@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+# pyrefly: ignore [missing-import]
 import fitz
 
 from .grid_reconstructor import TableGrid, build_cell_rects

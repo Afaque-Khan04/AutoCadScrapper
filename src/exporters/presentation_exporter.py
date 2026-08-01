@@ -125,25 +125,69 @@ def export_presentation_json(tables: list[dict], output_path: str | Path | None 
     simplified = simplify_for_presentation(tables)
     json_str = json.dumps(simplified, indent=2, ensure_ascii=False)
     if output_path:
-        Path(output_path).write_text(json_str, encoding="utf-8")
+        out = Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json_str, encoding="utf-8")
     return json_str
+
+
+def export_to_output_dir(
+    pdf_path: str | Path,
+    output_dir: str | Path | None = None,
+) -> dict[str, Path]:
+    """
+    End-to-end: extracts all regions from a PDF, then writes both the
+    full canonical JSON and the simplified presentation JSON into
+    `output_dir` (defaults to ``<project_root>/output/``).
+
+    File names are derived from the PDF stem:
+      - ``<stem>_canonical.json``  — full engineering/audit JSON
+      - ``<stem>_simplified.json`` — reviewer-friendly presentation JSON
+
+    Returns a dict with keys ``"canonical"`` and ``"simplified"`` mapping
+    to the written file paths.
+    """
+    from ..tables.table_builder import extract_all_regions
+
+    pdf_path = Path(pdf_path)
+    if output_dir is None:
+        # Default: <project_root>/output/
+        output_dir = Path(__file__).resolve().parent.parent.parent / "output"
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    stem = pdf_path.stem
+
+    # 1. Extract canonical data
+    canonical_tables = extract_all_regions(str(pdf_path))
+
+    # 2. Write canonical JSON
+    canonical_path = output_dir / f"{stem}_canonical.json"
+    canonical_json = json.dumps(canonical_tables, indent=2, ensure_ascii=False)
+    canonical_path.write_text(canonical_json, encoding="utf-8")
+
+    # 3. Write simplified presentation JSON
+    simplified_path = output_dir / f"{stem}_simplified.json"
+    export_presentation_json(canonical_tables, output_path=simplified_path)
+
+    return {"canonical": canonical_path, "simplified": simplified_path}
 
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python -m src.exporters.presentation_exporter <path_to_pdf_or_canonical_json>")
+        print("Usage: python -m src.exporters.presentation_exporter <path_to_pdf>")
         sys.exit(1)
 
-    target = sys.argv[1]
-    if target == "-":
-        canonical_tables = json.load(sys.stdin)
-    elif target.lower().endswith(".pdf"):
-        from src.tables.table_builder import extract_all_regions
-        canonical_tables = extract_all_regions(target)
+    target = Path(sys.argv[1])
+
+    if target.suffix.lower() == ".pdf":
+        paths = export_to_output_dir(target)
+        print(f"Canonical JSON:   {paths['canonical']}")
+        print(f"Simplified JSON:  {paths['simplified']}")
     else:
+        # Treat as pre-existing canonical JSON — just print simplified
         with open(target, encoding="utf-8") as f:
             canonical_tables = json.load(f)
-
-    print(export_presentation_json(canonical_tables))
+        print(export_presentation_json(canonical_tables))

@@ -1,0 +1,78 @@
+{
+  "tables": [
+    {
+      "name": "GENERAL NOTES",
+      "type": "general_notes",
+      "notes": {
+        "Grade Of Concrete": "M50",
+        "Grade Of Steel": "Fe500",
+        "Stripping Strength": "M25",
+        "Liftingtransportation And Erection": "M35"
+      },
+      "Cover": {
+        "Column": "40mm"
+      },
+      "additional_notes": [
+        "All dimensions are in mm"
+      ],
+      "legends": {
+        "Erection Mark": null
+      },
+      "flags": [
+        "Erection Mark (symbol/icon in source drawing -- not text-extractable)"
+      ]
+    },
+    {
+      "name": "Weight Schedule",
+      "type": "weight_schedule",
+      "rows": [
+        {
+          "Volume": "1.39 m³",
+          "Weight": "3486.65 kg"
+        }
+      ]
+    },
+    {
+      "name": "Insert Schedule",
+      "type": "insert_schedule",
+      "rows": [
+        {
+          "Ref No.": "N1",
+          "Type": "12.9Ø- LIFTING",
+          "Count": "2"
+        },
+        {
+          "Ref No.": "N2",
+          "Type": "12.9Ø- DEMOULDING",
+          "Count": "4"
+        },
+        {
+          "Ref No.": "N4B",
+          "Type": "75 Dia Dowel Tube",
+          "Count": "16"
+        }
+      ]
+    },
+    {
+      "name": "Dowel Bar Schedule",
+      "type": "dowel_bar_schedule",
+      "rows": [
+        {
+          "Ref No": "N7",
+          "Bar Diameter": "25 mm",
+          "Count": "8"
+        },
+        {
+          "Ref No": "N8",
+          "Bar Diameter": "32 mm",
+          "Count": "4"
+        },
+        {
+          "Ref No": "N9",
+          "Bar Diameter": "25 mm",
+          "Count": "4"
+        }
+      ]
+    }
+  ]
+}

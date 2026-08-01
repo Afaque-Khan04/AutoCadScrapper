@@ -79,7 +79,7 @@ def _parse_single_group(token: str) -> dict | None:
     return None
 
 
-def parse_rebar_value(raw_text: str) -> list[dict] | None:
+def parse_rebar_value(raw_text: str | None) -> list[dict] | None:
     """
     Splits on '+' to handle compound cells (e.g. "2-16Ø+1-12Ø") and
     parses each group independently. Returns None if nothing
