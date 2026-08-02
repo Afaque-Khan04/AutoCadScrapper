@@ -18,6 +18,7 @@ from typing import Any
 import fitz  # PyMuPDF
 
 from ..tables.anchor_detection import ScheduleAnchor
+from ..tables.text_geometry import cluster_words_into_rows, split_by_largest_gap
 
 
 ROW_TOLERANCE = 6.0         # pts; max y-diff for words in same line
@@ -70,10 +71,10 @@ def _discover_notes_bounds(
     blocks = page.get_text("blocks")
     exclusion_y = page_rect.y1
     for b in blocks:
-        if b[6] == 0 and b[1] > anchor.bbox.y1 and b[0] >= anchor.bbox.x0 - 50:
+        if b[6] == 0 and b[1] > anchor.bbox.y1 and b[0] >= anchor.bbox.x0 - 50:  # pyright: ignore[reportOperatorIssue] — fitz block-tuple elements are typed loosely
             text = " ".join(b[4].split()).lower()
             if any(excl.search(text) for excl in TITLE_BLOCK_EXCLUSIONS):
-                if b[1] < exclusion_y:
+                if b[1] < exclusion_y:  # pyright: ignore[reportOperatorIssue]
                     exclusion_y = b[1]
 
     # 2. Horizontal lines around anchor
@@ -82,7 +83,7 @@ def _discover_notes_bounds(
     top_y = max(h_above) if h_above else max(page_rect.y0, anchor.bbox.y0 - 10)
 
     h_below = [y for y, x0, x1 in h_lines if anchor.bbox.y1 < y < exclusion_y and (x0 - 30 <= anchor.bbox.x0 <= x1 + 30)]
-    bottom_y = max(h_below) if h_below else min(exclusion_y - 5, anchor.bbox.y1 + DEFAULT_SEARCH_DEPTH)
+    bottom_y = max(h_below) if h_below else min(exclusion_y - 5, anchor.bbox.y1 + DEFAULT_SEARCH_DEPTH)  # pyright: ignore[reportOperatorIssue]
 
     # 3. Vertical x-bounds
     v_matching = [x for x, y0, y1 in v_lines if y0 <= top_y + 15 and y1 >= bottom_y - 15]
@@ -115,7 +116,7 @@ def parse_notes_region(
     words = page.get_text("words")
     region_words = []
     for w in words:
-        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
+        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
         if search_region.x0 <= cx <= search_region.x1 and search_region.y0 <= cy <= search_region.y1:
             region_words.append({
                 'x0': w[0], 'y0': w[1], 'x1': w[2], 'y1': w[3],
@@ -128,19 +129,9 @@ def parse_notes_region(
         if not any(e['text'] == w['text'] and abs(e['cx'] - w['cx']) < 2.0 and abs(e['cy'] - w['cy']) < 2.0 for e in deduped):
             deduped.append(w)
 
-    # Cluster into lines
-    rows: list[dict] = []
-    for w in sorted(deduped, key=lambda x: x['cy']):
-        placed = False
-        for r in rows:
-            if abs(r['cy'] - w['cy']) <= ROW_TOLERANCE:
-                r['words'].append(w)
-                r['cy'] = sum(word['cy'] for word in r['words']) / len(r['words'])
-                placed = True
-                break
-        if not placed:
-            rows.append({'cy': w['cy'], 'words': [w]})
-
+    # Cluster into lines — shared running-average row clustering
+    # (same utility text_clustering.py uses, so both stay in sync).
+    rows = cluster_words_into_rows(deduped, ROW_TOLERANCE)
     rows.sort(key=lambda r: r['cy'])
     lines = []
     for r in rows:
@@ -186,13 +177,9 @@ def parse_notes_region(
             i += 1
             continue
 
-        # Metadata statement check
-        if "ALL DIMENSIONS" in text.upper() or "DIMENSION" in text.upper():
-            result["metadata"].append(text)
-            i += 1
-            continue
-
-        # Collect lines for single or multi-line key-value entry
+        # Collect lines for single or multi-line key-value entry.
+        # Standalone notes (no dash anywhere in the entry) are handled
+        # generically below by the has_dash branch — no keyword lookup.
         entry_lines = [lines[i]]
         j = i + 1
         has_dash = "-" in text
@@ -200,6 +187,11 @@ def parse_notes_region(
         while j < len(lines):
             next_line = lines[j]
             next_text = next_line['text']
+            # Break on a new section header, and on the standalone
+            # dimensions note which sits structurally adjacent to the
+            # previous entry (just past the 20pt continuation threshold
+            # on the benchmark PDF) — guard against it being absorbed
+            # into that entry's value.
             if (next_text.endswith(":") and "-" not in next_text) or ("ALL DIMENSIONS" in next_text.upper()):
                 break
             if "-" in next_text:
@@ -230,9 +222,16 @@ def parse_notes_region(
         dash_words = [w for w in all_words if w['text'] == '-']
 
         if dash_words:
-            dash_x = dash_words[0]['cx']
-            key_words = [w for w in all_words if w['cx'] < dash_x - 3]
-            val_words = [w for w in all_words if w['cx'] > dash_x + 3]
+            # Split key/value at the largest horizontal gap instead of
+            # anchoring to one dash word's position — robust to imperfect
+            # column alignment and to multi-line entries where the dash
+            # sits on its own line (e.g. "LIFTING,TRANSPORTATION / - M35 /
+            # AND ERECTION" on the benchmark PDF).
+            key_words, val_words = split_by_largest_gap(all_words, axis="x")
+            # The literal dash token may land on either side of the split
+            # — drop it so it never pollutes key or value text.
+            key_words = [w for w in key_words if w['text'] != '-']
+            val_words = [w for w in val_words if w['text'] != '-']
 
             key_words.sort(key=lambda w: (round(w['cy'] / 5) * 5, w['x0']))
             val_words.sort(key=lambda w: (round(w['cy'] / 5) * 5, w['x0']))
@@ -244,9 +243,11 @@ def parse_notes_region(
             if canon_key:
                 current_dict[canon_key] = val_str
         else:
+            # No dash anywhere in the entry → it's a standalone note with
+            # no paired value (e.g. "ALL DIMENSIONS ARE IN MM"), not a
+            # mis-keyed empty field. Send it to metadata instead.
             text_str = " ".join(w['text'] for w in all_words)
-            canon_key = normalize_key(text_str)
-            if canon_key:
-                current_dict[canon_key] = ""
+            if text_str.strip():
+                result["metadata"].append(text_str)
 
     return result

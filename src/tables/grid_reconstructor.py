@@ -33,6 +33,11 @@ class TableGrid:
     col_positions: list[float] = field(default_factory=list)              # x-coords of vertical rulings
     cells: list[fitz.Rect] = field(default_factory=list)                   # every reconstructed cell rect
     merged_header_cells: list[dict] = field(default_factory=list)        # [{"bbox": [...], "merge_type": "horizontal"|"vertical"}]
+    # Which strategy built this grid: "vector" (ruling-line reconstruction)
+    # or "text_clustering" (no vector lines available). Drives
+    # merge-detection gating in table_builder so text-derived grids
+    # never get spurious "merge_type" flags.
+    source: str = "vector"
 
 
 def extract_grid_lines(page: fitz.Page, region: fitz.Rect) -> list[GridLine]:

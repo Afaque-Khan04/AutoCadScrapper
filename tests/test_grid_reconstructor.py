@@ -97,6 +97,7 @@ class TestBuildGrid:
     def test_cell_rects_are_correct(self):
         lines = self._simple_3x3_lines()
         grid = build_grid(lines)
+        assert grid is not None
 
         # First cell: top-left
         first = grid.cells[0]
@@ -104,6 +105,20 @@ class TestBuildGrid:
         assert abs(first.y0 - 100) < 0.2
         assert abs(first.x1 - 150) < 0.2
         assert abs(first.y1 - 130) < 0.2
+
+    def test_vector_grid_is_labeled_vector(self):
+        """Grids built from ruling lines must carry source="vector" so
+        merge detection runs on them (see merge-gating regression test)."""
+        lines = self._simple_3x3_lines()
+        grid = build_grid(lines)
+        assert grid is not None
+        assert grid.source == "vector"
+
+    def test_source_defaults_to_vector(self):
+        """Dataclass default must be "vector" — text clustering tags its
+        own output explicitly."""
+        grid = TableGrid()
+        assert grid.source == "vector"
 
 
 class TestMergedHeaderDetection:
@@ -138,5 +153,6 @@ class TestMergedHeaderDetection:
             GridLine("vertical", 350, 100, 160),  # full span
         ]
         grid = build_grid(lines)
+        assert grid is not None
         detect_merged_header_cells(grid, lines, header_row_count=1)
         assert len(grid.merged_header_cells) == 0

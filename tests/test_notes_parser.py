@@ -56,8 +56,13 @@ class TestNotesParserIntegration:
         assert "cover" in notes
         assert notes["cover"].get("column") == "40mm"
 
-        # Check metadata
+        # Check metadata — the standalone dimensions note must land in
+        # metadata via the generic no-dash path, not as an empty-value key
         assert any("ALL DIMENSIONS" in m for m in parsed["metadata"])
+        assert "all_dimensions_are_in_mm" not in notes
+        assert not any(
+            isinstance(v, str) and v == "" for v in notes.values()
+        ), "dash-less standalone notes should not become empty-value keys"
 
     def test_excludes_client_block(self):
         anchors = find_schedule_anchors(self.page, 1, include_notes=True)

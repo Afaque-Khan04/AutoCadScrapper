@@ -13,3 +13,6 @@ pytest-cov>=5.0.0
 
 # JSON schema validation (for output verification)
 jsonschema>=4.21.0
+
+# Review/demo UI (Phase 5 preview)
+streamlit>=1.36.0

@@ -28,6 +28,7 @@ from typing import Any
 import fitz
 
 from .grid_reconstructor import TableGrid, build_cell_rects
+from .text_geometry import cluster_words_into_rows
 
 
 # Minimum gap (in points) between two words to consider them in
@@ -70,7 +71,7 @@ def _collect_words_in_region(page: fitz.Page, region: fitz.Rect) -> list[dict]:
     words = page.get_text("words")  # (x0, y0, x1, y1, word, block_no, line_no, word_no)
     result = []
     for w in words:
-        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
+        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
         if region.x0 <= cx <= region.x1 and region.y0 <= cy <= region.y1:
             result.append({
                 "text": w[4],
@@ -105,47 +106,19 @@ def _cluster_rows(words: list[dict]) -> list[TextRow]:
     """
     Groups words into rows by y-center proximity.
 
-    Sorts words by cy, then clusters consecutive words whose cy values
-    differ by at most ROW_TOLERANCE.
+    Delegates the actual clustering to the shared
+    ``text_geometry.cluster_words_into_rows`` (running-average, no cy
+    drift) and wraps each result row in a TextRow.
     """
-    if not words:
-        return []
-
-    sorted_words = sorted(words, key=lambda w: w["cy"])
-    rows: list[TextRow] = []
-    current_cluster = [sorted_words[0]]
-    current_cy = sorted_words[0]["cy"]
-
-    for w in sorted_words[1:]:
-        if abs(w["cy"] - current_cy) <= ROW_TOLERANCE:
-            current_cluster.append(w)
-            # Running average for y-center (avoids drift from repeated averaging)
-            current_cy = (current_cy * (len(current_cluster) - 1) + w["cy"]) / len(current_cluster)
-        else:
-            # Finalize previous row
-            y0 = min(c["y0"] for c in current_cluster)
-            y1 = max(c["y1"] for c in current_cluster)
-            rows.append(TextRow(
-                y_center=current_cy,
-                y0=y0,
-                y1=y1,
-                cells=[current_cluster],
-            ))
-            current_cluster = [w]
-            current_cy = w["cy"]
-
-    # Finalize last row
-    if current_cluster:
-        y0 = min(c["y0"] for c in current_cluster)
-        y1 = max(c["y1"] for c in current_cluster)
-        rows.append(TextRow(
-            y_center=current_cy,
-            y0=y0,
-            y1=y1,
-            cells=[current_cluster],
-        ))
-
-    return rows
+    return [
+        TextRow(
+            y_center=row["cy"],
+            y0=min(w["y0"] for w in row["words"]),
+            y1=max(w["y1"] for w in row["words"]),
+            cells=[row["words"]],
+        )
+        for row in cluster_words_into_rows(words, ROW_TOLERANCE)
+    ]
 
 
 def _cluster_cells_in_row(row: TextRow) -> list[list[dict]]:
@@ -267,4 +240,5 @@ def build_text_grid(page: fitz.Page, region: fitz.Rect) -> Any | None:
         row_positions=row_positions,
         col_positions=col_positions,
         cells=cells,
+        source="text_clustering",
     )

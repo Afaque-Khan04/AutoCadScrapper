@@ -29,6 +29,7 @@
   {
     "table_type": "weight_schedule",
     "title_raw": "Weight Schedule",
+    "detection_strategy": "text_clustering",
     "source_region_bbox": [
       44.5926513671875,
       738.0960693359375,
@@ -52,17 +53,7 @@
         "parent_header": null
       }
     ],
-    "merged_header_cells": [
-      {
-        "bbox": [
-          49.5926513671875,
-          741.1963500976562,
-          153.54806518554688,
-          754.8114318847656
-        ],
-        "merge_type": "horizontal"
-      }
-    ],
+    "merged_header_cells": [],
     "rows": [
       {
         "row_index": 0,
@@ -99,6 +90,7 @@
   {
     "table_type": "insert_schedule",
     "title_raw": "Insert Schedule",
+    "detection_strategy": "text_clustering",
     "source_region_bbox": [
       188.1886413574219,
       733.0556640625,
@@ -128,26 +120,7 @@
         "parent_header": null
       }
     ],
-    "merged_header_cells": [
-      {
-        "bbox": [
-          187.7740707397461,
-          741.1963500976562,
-          321.52724838256836,
-          754.8114318847656
-        ],
-        "merge_type": "horizontal"
-      },
-      {
-        "bbox": [
-          221.5592441558838,
-          741.1963500976562,
-          349.65162658691406,
-          754.8114318847656
-        ],
-        "merge_type": "horizontal"
-      }
-    ],
+    "merged_header_cells": [],
     "rows": [
       {
         "row_index": 0,
@@ -278,6 +251,7 @@
   {
     "table_type": "dowel_bar_schedule",
     "title_raw": "Dowel Bar Schedule",
+    "detection_strategy": "text_clustering",
     "source_region_bbox": [
       344.3780975341797,
       733.0556640625,
@@ -307,26 +281,7 @@
         "parent_header": null
       }
     ],
-    "merged_header_cells": [
-      {
-        "bbox": [
-          382.4627990722656,
-          741.1963500976562,
-          483.6799736022949,
-          754.8114318847656
-        ],
-        "merge_type": "horizontal"
-      },
-      {
-        "bbox": [
-          413.7576026916504,
-          741.1963500976562,
-          512.8685989379883,
-          754.8114318847656
-        ],
-        "merge_type": "horizontal"
-      }
-    ],
+    "merged_header_cells": [],
     "rows": [
       {
         "row_index": 0,

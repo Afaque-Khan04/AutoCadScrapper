@@ -222,7 +222,7 @@ def extract_cell_text(page: fitz.Page, cell: fitz.Rect) -> str:
     words = page.get_text("words")  # (x0, y0, x1, y1, word, block_no, line_no, word_no)
     matched = []
     for w in words:
-        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
+        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
         if cell.x0 <= cx <= cell.x1 and cell.y0 <= cy <= cell.y1:
             matched.append(w[4])
     return " ".join(matched)
@@ -366,13 +366,16 @@ def build_table_from_anchor(
                     filtered_cols.append(grid.col_positions[c + 1])
 
             if len(filtered_cols) >= 3:
-                # Rebuild grid with filtered columns
+                # Rebuild grid with filtered columns — carry the grid's
+                # provenance (source) forward so a text-derived grid stays
+                # labelled as text-derived through the rebuild.
                 n_cols_filtered = len(filtered_cols) - 1
                 cells = build_cell_rects(grid.row_positions, filtered_cols)
                 grid = TableGrid(
                     row_positions=grid.row_positions,
                     col_positions=filtered_cols,
                     cells=cells,
+                    source=grid.source,
                 )
 
             region = search_region
@@ -381,6 +384,9 @@ def build_table_from_anchor(
             return None
     else:
         # --- Pass 2: full extraction within discovered bounds ---
+        # search_region is guaranteed non-None here — use_text_only is only
+        # set when bounds discovery returned None or a too-narrow region.
+        assert search_region is not None
         raw_lines = extract_grid_lines(page, search_region)
         region, lines = refine_region_bottom(search_region, raw_lines)
         grid = build_grid(lines)
@@ -397,7 +403,13 @@ def build_table_from_anchor(
         if grid is None or len(grid.row_positions) < 2 or len(grid.col_positions) < 2:
             return None
 
-    detect_merged_header_cells(grid, lines, header_row_count=1)
+    # Merge detection only makes sense for vector-reconstructed grids:
+    # it infers "missing" rulings by comparing against the actual line
+    # set. Text-clustering grids have no ruling lines at all, so running
+    # it there only produces false "merge_type" flags (e.g. Insert
+    # Schedule / Dowel Bar Schedule on the benchmark PDF).
+    if grid.source == "vector":
+        detect_merged_header_cells(grid, lines, header_row_count=1)
 
     # Extract and normalize headers from the first row
     headers = _extract_headers(page, grid, header_row_count=1)
@@ -436,6 +448,7 @@ def build_table_from_anchor(
     return {
         "table_type": anchor.table_type,
         "title_raw": anchor.matched_text,
+        "detection_strategy": grid.source,  # "vector" | "text_clustering"
         "source_region_bbox": [region.x0, region.y0, region.x1, region.y1],
         "row_count": n_rows - 1,
         "col_count": n_cols,
@@ -451,7 +464,7 @@ def extract_all_tables(pdf_path: str) -> list[dict]:
     page, and attempts to build a table for each one."""
     doc = fitz.open(pdf_path)
     tables = []
-    for page_number, page in enumerate(doc, start=1):
+    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType] — fitz Document is iterable at runtime
         for anchor in find_schedule_anchors(page, page_number, include_notes=False):
             table = build_table_from_anchor(page, anchor, page.rect)
             if table:
@@ -465,7 +478,7 @@ def extract_all_regions(pdf_path: str) -> list[dict]:
     Prevents duplicate extraction of sub-anchors (like LEGENDS inside General Notes)."""
     doc = fitz.open(pdf_path)
     regions = []
-    for page_number, page in enumerate(doc, start=1):
+    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType] — fitz Document is iterable at runtime
         processed_bboxes: list[list[float]] = []
         for anchor in find_schedule_anchors(page, page_number, include_notes=True):
             cx = (anchor.bbox.x0 + anchor.bbox.x1) / 2
