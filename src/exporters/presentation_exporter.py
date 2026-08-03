@@ -147,6 +147,7 @@ def export_to_output_dir(
     Returns a dict with keys ``"canonical"`` and ``"simplified"`` mapping
     to the written file paths.
     """
+    # pyrefly: ignore [missing-import]
     from ..tables.table_builder import extract_all_regions
 
     pdf_path = Path(pdf_path)

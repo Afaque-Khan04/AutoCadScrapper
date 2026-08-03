@@ -116,10 +116,14 @@ def parse_notes_region(
     words = page.get_text("words")
     region_words = []
     for w in words:
-        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
+        # Coerce the tuple coordinates to float: PyMuPDF types word-tuple
+        # elements loosely, so pyrefly infers them as str and rejects
+        # `(w[0] + w[2]) / 2`. At runtime they are always floats.
+        x0, y0, x1, y1 = (float(w[0]), float(w[1]), float(w[2]), float(w[3]))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
         if search_region.x0 <= cx <= search_region.x1 and search_region.y0 <= cy <= search_region.y1:
             region_words.append({
-                'x0': w[0], 'y0': w[1], 'x1': w[2], 'y1': w[3],
+                'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1,
                 'text': w[4], 'cx': cx, 'cy': cy
             })
 

@@ -71,11 +71,15 @@ def _collect_words_in_region(page: fitz.Page, region: fitz.Rect) -> list[dict]:
     words = page.get_text("words")  # (x0, y0, x1, y1, word, block_no, line_no, word_no)
     result = []
     for w in words:
-        cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
+        # Coerce the tuple coordinates to float: PyMuPDF types word-tuple
+        # elements loosely, so pyrefly infers them as str and rejects
+        # `(w[0] + w[2]) / 2`. At runtime they are always floats.
+        x0, y0, x1, y1 = (float(w[0]), float(w[1]), float(w[2]), float(w[3]))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
         if region.x0 <= cx <= region.x1 and region.y0 <= cy <= region.y1:
             result.append({
                 "text": w[4],
-                "x0": w[0], "y0": w[1], "x1": w[2], "y1": w[3],
+                "x0": x0, "y0": y0, "x1": x1, "y1": y1,
                 "cx": cx, "cy": cy,
             })
     return result

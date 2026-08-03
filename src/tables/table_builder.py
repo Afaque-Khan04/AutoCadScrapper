@@ -26,14 +26,20 @@ from pathlib import Path
 
 import fitz
 
+# pyrefly: ignore [missing-import]
 from .anchor_detection import find_schedule_anchors, ScheduleAnchor
+# pyrefly: ignore [missing-import]
 from .grid_reconstructor import (
     GridLine, extract_grid_lines, build_grid, build_cell_rects, TableGrid,
     detect_merged_header_cells, COLLINEAR_MERGE_TOLERANCE,
 )
+# pyrefly: ignore [missing-import]
 from .text_clustering import build_text_grid
+# pyrefly: ignore [missing-import]
 from .header_normalizer import normalize_header
+# pyrefly: ignore [missing-import]
 from ..parsing.rebar_notation import parse_rebar_value
+# pyrefly: ignore [missing-import]
 from ..parsing.notes_parser import parse_notes_region
 
 
@@ -222,6 +228,7 @@ def extract_cell_text(page: fitz.Page, cell: fitz.Rect) -> str:
     words = page.get_text("words")  # (x0, y0, x1, y1, word, block_no, line_no, word_no)
     matched = []
     for w in words:
+        # pyrefly: ignore [unsupported-operation]
         cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2  # pyright: ignore[reportOperatorIssue] — fitz word-tuple elements are typed loosely
         if cell.x0 <= cx <= cell.x1 and cell.y0 <= cy <= cell.y1:
             matched.append(w[4])
