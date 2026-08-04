@@ -1,0 +1,71 @@
+{
+  "source_pdf": "benchmarkpdf.pdf",
+  "page_width": 1300.0,
+  "page_height": 950.0,
+  "title_block_zone": {"x0": 1060.0, "y0": 20.0, "x1": 1290.0, "y1": 930.0},
+  "candidates": [
+    {
+      "label": "weight_schedule",
+      "expected_keep": true,
+      "bbox": {"x0": 30, "y0": 780, "x1": 195, "y1": 830},
+      "structure_source": "vector_grid",
+      "header_texts": ["Volume", "Weight"],
+      "row_count": 1,
+      "col_count": 2
+    },
+    {
+      "label": "insert_schedule",
+      "expected_keep": true,
+      "bbox": {"x0": 210, "y0": 780, "x1": 400, "y1": 850},
+      "structure_source": "vector_grid",
+      "header_texts": ["Ref No.", "Type", "Count"],
+      "row_count": 3,
+      "col_count": 3
+    },
+    {
+      "label": "dowel_bar_schedule",
+      "expected_keep": true,
+      "bbox": {"x0": 415, "y0": 780, "x1": 600, "y1": 850},
+      "structure_source": "vector_grid",
+      "header_texts": ["Ref No", "Bar Diameter", "Count"],
+      "row_count": 3,
+      "col_count": 3
+    },
+    {
+      "label": "general_notes",
+      "expected_keep": true,
+      "bbox": {"x0": 1065, "y0": 25, "x1": 1285, "y1": 300},
+      "structure_source": "text_clustering",
+      "header_texts": ["GRADE OF CONCRETE", "GRADE OF STEEL", "COVER", "LEGENDS"],
+      "row_count": 6,
+      "col_count": 2
+    },
+    {
+      "label": "revision_schedule",
+      "expected_keep": false,
+      "bbox": {"x0": 1065, "y0": 745, "x1": 1285, "y1": 780},
+      "structure_source": "vector_grid",
+      "header_texts": ["Rev", "Date", "Description", "Chkd", "Appd"],
+      "row_count": 1,
+      "col_count": 5
+    },
+    {
+      "label": "client_project_block",
+      "expected_keep": false,
+      "bbox": {"x0": 1065, "y0": 460, "x1": 1285, "y1": 620},
+      "structure_source": "text_clustering",
+      "header_texts": ["Client", "Project"],
+      "row_count": 8,
+      "col_count": 1
+    },
+    {
+      "label": "structural_consultant_block",
+      "expected_keep": false,
+      "bbox": {"x0": 1065, "y0": 620, "x1": 1285, "y1": 745},
+      "structure_source": "text_clustering",
+      "header_texts": ["Structural Consultant"],
+      "row_count": 5,
+      "col_count": 1
+    }
+  ]
+}

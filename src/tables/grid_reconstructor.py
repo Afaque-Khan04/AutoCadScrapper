@@ -14,9 +14,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import fitz
 
+from ..detection.title_block_zone import BBox
+
 ANGLE_TOLERANCE_DEG = 3.0         # unused directly (see dx/dy check) -- kept for documentation of intent
 COLLINEAR_MERGE_TOLERANCE = 2.0   # pts; merges broken/dashed segments into one logical line
 MIN_LINE_LENGTH = 5.0             # pts; filters out arrowhead-scale noise, tick marks, etc.
+MAX_ROW_GAP = 40.0               # pts; gap > this between consecutive horizontals = end of table
+
 
 
 @dataclass
@@ -196,3 +200,48 @@ def detect_merged_header_cells(grid: TableGrid, lines: list[GridLine], header_ro
                     "bbox": [col_left, header_top, col_right, header_bottom],
                     "merge_type": "vertical",
                 })
+
+
+def extract_closed_rectangles(page: fitz.Page) -> list[BBox]:
+    """
+    Extracts bounding boxes of closed vector rectangles on the page.
+    Used by title_block_zone detection to find title block frames without
+    duplicate line parsing.
+    """
+    rects: list[BBox] = []
+    for drawing in page.get_drawings():
+        d_rect = fitz.Rect(drawing["rect"])
+        if d_rect.width >= 20.0 and d_rect.height >= 20.0:
+            rects.append(BBox(d_rect.x0, d_rect.y0, d_rect.x1, d_rect.y1))
+    return rects
+
+
+def refine_region_bottom(
+    region: fitz.Rect,
+    lines: list[GridLine],
+) -> tuple[fitz.Rect, list[GridLine]]:
+    """
+    Trims the region's bottom edge to the end of the actual contiguous
+    ruling block instead of trusting a fixed height.
+    """
+    row_ys = sorted({
+        round(l.position, 1)
+        for l in lines if l.orientation == "horizontal"
+    })
+    if len(row_ys) < 2:
+        return region, lines
+
+    bottom = row_ys[0]
+    for y in row_ys[1:]:
+        if y - bottom > MAX_ROW_GAP:
+            break
+        bottom = y
+
+    trimmed_region = fitz.Rect(region.x0, region.y0, region.x1, bottom)
+    filtered_lines = [
+        l for l in lines
+        if not (l.orientation == "horizontal" and l.position > bottom + 1)
+    ]
+    return trimmed_region, filtered_lines
+
+

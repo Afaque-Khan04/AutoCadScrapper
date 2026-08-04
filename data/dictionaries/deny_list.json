@@ -1,0 +1,100 @@
+[
+  {
+    "term": "Rev",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Revision Schedule column header"
+  },
+  {
+    "term": "Date",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Revision Schedule column header"
+  },
+  {
+    "term": "Description",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Revision Schedule column header -- generic word, watch for false positives against schedule notes"
+  },
+  {
+    "term": "Chkd",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Revision Schedule column header (Checked)"
+  },
+  {
+    "term": "Appd",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Revision Schedule column header (Approved)"
+  },
+  {
+    "term": "Drawn By",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Job No",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Sheet No",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Scale",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Drawing Title",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Element No",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block field"
+  },
+  {
+    "term": "Structural Consultant",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block info section, not a schedule"
+  },
+  {
+    "term": "Client",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block info section, not a schedule"
+  },
+  {
+    "term": "Project",
+    "category": "title_block_admin",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Title block info section, not a schedule"
+  }
+]

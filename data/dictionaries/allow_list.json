@@ -1,0 +1,79 @@
+[
+  {
+    "term": "Ref No.",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Insert Schedule / Dowel Bar Schedule column header"
+  },
+  {
+    "term": "Type",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Insert Schedule column header"
+  },
+  {
+    "term": "Count",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Insert Schedule / Dowel Bar Schedule column header"
+  },
+  {
+    "term": "Bar Diameter",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Dowel Bar Schedule column header"
+  },
+  {
+    "term": "Volume",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Weight Schedule column header"
+  },
+  {
+    "term": "Weight",
+    "category": "schedule_headers",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "Weight Schedule column header"
+  },
+  {
+    "term": "GRADE OF CONCRETE",
+    "category": "notes_structural_cues",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "General Notes label-dash-value line"
+  },
+  {
+    "term": "GRADE OF STEEL",
+    "category": "notes_structural_cues",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "General Notes label-dash-value line"
+  },
+  {
+    "term": "COVER",
+    "category": "notes_structural_cues",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "General Notes nested sub-section header"
+  },
+  {
+    "term": "LEGENDS",
+    "category": "notes_structural_cues",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "General Notes nested sub-section header"
+  },
+  {
+    "term": "ALL DIMENSIONS ARE IN MM",
+    "category": "notes_structural_cues",
+    "source_pdf": "benchmarkpdf.pdf",
+    "added_on": "2026-08-04",
+    "notes": "General Notes standalone sentence-form note"
+  }
+]

@@ -21,26 +21,27 @@ Table-bounds discovery strategy (replaces the earlier "page-width clip"):
 
 from __future__ import annotations
 import json
+import logging
 import sys
 from pathlib import Path
 
 import fitz
 
-# pyrefly: ignore [missing-import]
+logger = logging.getLogger(__name__)
+
 from .anchor_detection import find_schedule_anchors, ScheduleAnchor
-# pyrefly: ignore [missing-import]
 from .grid_reconstructor import (
     GridLine, extract_grid_lines, build_grid, build_cell_rects, TableGrid,
     detect_merged_header_cells, COLLINEAR_MERGE_TOLERANCE,
 )
-# pyrefly: ignore [missing-import]
 from .text_clustering import build_text_grid
-# pyrefly: ignore [missing-import]
 from .header_normalizer import normalize_header
-# pyrefly: ignore [missing-import]
+from .candidate_scanner import scan_page_for_candidates
+from ..detection.region_candidates import find_candidate_regions_for_page
+from ..detection.scoring import ScoredRegion
 from ..parsing.rebar_notation import parse_rebar_value
-# pyrefly: ignore [missing-import]
 from ..parsing.notes_parser import parse_notes_region
+
 
 
 HARD_SEARCH_CAP = 900.0          # pts; absolute max vertical search depth
@@ -466,12 +467,81 @@ def build_table_from_anchor(
     }
 
 
-def extract_all_tables(pdf_path: str) -> list[dict]:
+def _build_table_from_retained_grid(
+    page: fitz.Page,
+    scored: ScoredRegion,
+    page_number: int,
+) -> dict:
+    c = scored.candidate
+    grid = c.retained_grid
+    region = fitz.Rect(c.bbox.x0, c.bbox.y0, c.bbox.x1, c.bbox.y1)
+
+    if grid and grid.source == "vector":
+        raw_lines = extract_grid_lines(page, region)
+        detect_merged_header_cells(grid, raw_lines, header_row_count=1)
+
+    headers = _extract_headers(page, grid, header_row_count=1) if grid else []
+
+    rebar_col_indices = {
+        h["col_index"] for h in headers
+        if h["canonical_field"] in _REBAR_FIELDS
+    }
+
+    n_cols = len(grid.col_positions) - 1 if grid else c.col_count
+    n_rows = len(grid.row_positions) - 1 if grid else c.row_count
+    rows = []
+
+    if grid:
+        for r in range(1, n_rows):
+            row_cells = []
+            for col in range(n_cols):
+                cell_rect = grid.cells[r * n_cols + col]
+                raw_text = extract_cell_text(page, cell_rect)
+                normalized = parse_rebar_value(raw_text) if col in rebar_col_indices else None
+                row_cells.append({
+                    "col_index": col,
+                    "raw_text": raw_text,
+                    "confidence": 1.0,
+                    "normalized_value": normalized,
+                    "bbox": [cell_rect.x0, cell_rect.y0, cell_rect.x1, cell_rect.y1],
+                })
+            rows.append({"row_index": r - 1, "cells": row_cells})
+
+    table_type = "schedule"
+    if c.nearby_title_text:
+        from ..utils.constants import SCHEDULE_TITLE_PATTERNS
+        norm_title = " ".join(c.nearby_title_text.split()).lower()
+        for t_type, patterns in SCHEDULE_TITLE_PATTERNS.items():
+            if any(p.search(norm_title) for p in patterns):
+                table_type = t_type
+                break
+
+    return {
+        "table_type": table_type,
+        "title_raw": c.nearby_title_text or "",
+        "detection_strategy": c.structure_source,
+        "source_region_bbox": [c.bbox.x0, c.bbox.y0, c.bbox.x1, c.bbox.y1],
+        "row_count": max(0, n_rows - 1),
+        "col_count": n_cols,
+        "header_row_index": 0,
+        "headers": headers,
+        "merged_header_cells": grid.merged_header_cells if grid else [],
+        "rows": rows,
+        "confidence": scored.confidence,
+        "page_number": page_number,
+    }
+
+
+def extract_all_tables(pdf_path: str, use_confidence_detection: bool = False) -> list[dict]:
     """Entry point: opens a PDF, finds every schedule-table anchor on every
     page, and attempts to build a table for each one."""
+    if use_confidence_detection:
+        regions = extract_all_regions(pdf_path, use_confidence_detection=True)
+        return [r for r in regions if r.get("table_type") != "general_notes"]
+
     doc = fitz.open(pdf_path)
     tables = []
-    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType] — fitz Document is iterable at runtime
+    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType]
         for anchor in find_schedule_anchors(page, page_number, include_notes=False):
             table = build_table_from_anchor(page, anchor, page.rect)
             if table:
@@ -480,18 +550,71 @@ def extract_all_tables(pdf_path: str) -> list[dict]:
     return tables
 
 
-def extract_all_regions(pdf_path: str) -> list[dict]:
+def extract_all_regions(pdf_path: str, use_confidence_detection: bool = False) -> list[dict]:
     """Extracts all regions (schedules, General Notes, Legends, Specifications).
     Prevents duplicate extraction of sub-anchors (like LEGENDS inside General Notes)."""
     doc = fitz.open(pdf_path)
     regions = []
-    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType] — fitz Document is iterable at runtime
+
+    if use_confidence_detection:
+        for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType]
+            raw_candidates, rect_zone_candidates = scan_page_for_candidates(page)
+            scored_regions = find_candidate_regions_for_page(
+                page.rect.width,
+                page.rect.height,
+                raw_candidates,
+                rect_zone_candidates,
+            )
+            kept_regions = [r for r in scored_regions if r.keep]
+
+            for scored in kept_regions:
+                category = scored.best_allow_match.category if (scored.best_allow_match and scored.best_allow_match.matched) else None
+
+                if category == "schedule_headers":
+                    res = _build_table_from_retained_grid(page, scored, page_number)
+                    regions.append(res)
+                elif category == "notes_structural_cues":
+                    title_text = scored.candidate.nearby_title_text or "GENERAL NOTES"
+                    anchor_bbox = fitz.Rect(
+                        scored.candidate.bbox.x0,
+                        scored.candidate.bbox.y0,
+                        scored.candidate.bbox.x1,
+                        scored.candidate.bbox.y1,
+                    )
+                    anchor = ScheduleAnchor(
+                        table_type="general_notes",
+                        matched_text=title_text,
+                        bbox=anchor_bbox,
+                        page_number=page_number,
+                        region_type="general_notes",
+                    )
+                    res = parse_notes_region(page, anchor, page.rect)
+                    if res:
+                        res["page_number"] = page_number
+                        res["confidence"] = scored.confidence
+                        regions.append(res)
+                elif scored.candidate.nearby_title_regex_hit:
+                    # Title hit without explicit header dictionary match -> schedule assembly
+                    res = _build_table_from_retained_grid(page, scored, page_number)
+                    regions.append(res)
+                else:
+                    # Amendment 1: Kept on structure/zone signals alone without vocabulary or title match -- log and skip
+                    logger.warning(
+                        "Candidate region %s kept on structural signals alone without vocabulary or title match. "
+                        "Skipping unclassified layout noise.",
+                        scored.candidate.bbox,
+                    )
+
+
+        return regions
+
+    # Legacy path (use_confidence_detection == False)
+    for page_number, page in enumerate(doc, start=1):  # pyright: ignore[reportArgumentType]
         processed_bboxes: list[list[float]] = []
         for anchor in find_schedule_anchors(page, page_number, include_notes=True):
             cx = (anchor.bbox.x0 + anchor.bbox.x1) / 2
             cy = (anchor.bbox.y0 + anchor.bbox.y1) / 2
 
-            # Skip if anchor center falls inside an already-extracted panel
             if any(b[0] <= cx <= b[2] and b[1] <= cy <= b[3] for b in processed_bboxes):
                 continue
 
@@ -511,3 +634,4 @@ if __name__ == "__main__":
 
     results = extract_all_regions(sys.argv[1])
     print(json.dumps(results, indent=2))
+

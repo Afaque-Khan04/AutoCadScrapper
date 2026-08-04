@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import MagicMock, PropertyMock
 import fitz
 
+# pyrefly: ignore [missing-import]
 from src.tables.anchor_detection import find_schedule_anchors
 
 
