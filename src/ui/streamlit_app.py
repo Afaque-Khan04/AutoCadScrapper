@@ -37,9 +37,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# pyrefly: ignore [missing-import]
 import streamlit as st  # noqa: E402
 
+# pyrefly: ignore [missing-import]
 from src.tables.table_builder import extract_all_regions  # noqa: E402
+# pyrefly: ignore [missing-import]
 from src.exporters.presentation_exporter import simplify_for_presentation  # noqa: E402
 
 BENCHMARK_PDF = PROJECT_ROOT / "reference" / "benchmarkpdf.pdf"
