@@ -8,8 +8,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from src.detection.dictionaries import DictionaryStore, load_default_stores
+# pyrefly: ignore [missing-import]
 from src.detection.scoring import RegionCandidate, ScoredRegion, ScoringWeights, score_all
+# pyrefly: ignore [missing-import]
 from src.detection.title_block_zone import BBox, TitleBlockZone, detect_title_block_zone
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "dictionaries"

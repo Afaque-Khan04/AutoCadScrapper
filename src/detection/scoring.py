@@ -25,7 +25,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal, Any
 
+# pyrefly: ignore [missing-import]
 from src.detection.dictionaries import DictionaryStore, MatchResult
+# pyrefly: ignore [missing-import]
 from src.detection.title_block_zone import BBox, TitleBlockZone, is_inside_zone
 
 StructureSource = Literal["vector_grid", "text_clustering", "none"]

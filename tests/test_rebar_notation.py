@@ -6,6 +6,7 @@ These tests are pure-logic (no PDF I/O) and should run fast.
 """
 
 import pytest
+# pyrefly: ignore [missing-import]
 from src.parsing.rebar_notation import parse_rebar_value, _parse_single_group
 
 

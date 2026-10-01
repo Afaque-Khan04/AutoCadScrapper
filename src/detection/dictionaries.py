@@ -92,6 +92,7 @@ class DictionaryStore:
         """
         existing_terms = [e.term for e in self.entries if e.category == category]
         if existing_terms:
+            # pyrefly: ignore [no-matching-overload]
             best = process.extractOne(term, existing_terms, scorer=fuzz.token_sort_ratio)
             if best and best[1] >= DEFAULT_FUZZY_THRESHOLD:
                 return False  # already covered, skip duplicate
@@ -108,6 +109,7 @@ class DictionaryStore:
             return MatchResult(matched=False, term=None, category=None, score=0.0, kind=self.kind)
 
         terms = [e.term for e in self.entries]
+        # pyrefly: ignore [no-matching-overload]
         best = process.extractOne(candidate_text, terms, scorer=fuzz.token_sort_ratio)
         if best is None or best[1] < threshold:
             return MatchResult(matched=False, term=None, category=None, score=best[1] if best else 0.0, kind=self.kind)

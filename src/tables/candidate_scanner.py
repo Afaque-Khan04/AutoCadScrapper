@@ -48,6 +48,7 @@ def _extract_header_texts_from_grid(page: fitz.Page, grid: TableGrid) -> list[st
             cell_rect = fitz.Rect(grid.col_positions[c], h_top, grid.col_positions[c + 1], h_bot)
             matched_words = []
             for w in words:
+                # pyrefly: ignore [unsupported-operation]
                 cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
                 if cell_rect.x0 <= cx <= cell_rect.x1 and cell_rect.y0 <= cy <= cell_rect.y1:
                     matched_words.append(w[4])

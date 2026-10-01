@@ -4,6 +4,8 @@ matching against the alias dictionary.
 """
 
 import pytest
+
+# pyrefly: ignore [missing-import]
 from src.tables.header_normalizer import normalize_header, normalize_headers_for_table
 
 

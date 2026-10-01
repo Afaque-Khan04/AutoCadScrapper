@@ -9,12 +9,13 @@ if str(PROJECT_ROOT) not in sys.path:
 import json
 # pyrefly: ignore [missing-import]
 import pytest
-
+# pyrefly: ignore [missing-import]
 from src.exporters.presentation_exporter import (
     simplify_for_presentation,
     export_presentation_json,
     _humanize,
 )
+# pyrefly: ignore [missing-import]
 from src.tables.table_builder import extract_all_regions
 
 

@@ -9,9 +9,11 @@ import itertools
 import json
 from dataclasses import dataclass
 from pathlib import Path
-
+# pyrefly: ignore [missing-import]
 from src.detection.dictionaries import DictionaryStore, load_default_stores
+# pyrefly: ignore [missing-import]
 from src.detection.scoring import RegionCandidate, ScoringWeights, score_region
+# pyrefly: ignore [missing-import]
 from src.detection.title_block_zone import BBox, TitleBlockZone
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -122,6 +124,7 @@ def grid_search(
     labeled: list[LabeledCandidate],
     allow_store: DictionaryStore,
     deny_store: DictionaryStore,
+    # pyrefly: ignore [bad-function-definition]
     grid: dict[str, list[float]] = DEFAULT_GRID,
     metric: str = "accuracy",
 ) -> list[tuple[ScoringWeights, Metrics]]:

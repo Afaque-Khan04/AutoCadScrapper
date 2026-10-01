@@ -11,6 +11,7 @@ import os
 import pytest
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from src.tables.table_builder import extract_all_tables
 
 

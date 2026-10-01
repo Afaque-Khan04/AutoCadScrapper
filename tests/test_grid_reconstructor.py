@@ -8,6 +8,7 @@ These are unit tests using synthetic line data (no PDF required).
 import pytest
 import fitz
 
+# pyrefly: ignore [missing-import]
 from src.tables.grid_reconstructor import (
     GridLine, TableGrid,
     _merge_collinear, _flatten_cluster,

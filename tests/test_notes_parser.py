@@ -6,7 +6,9 @@ from pathlib import Path
 import fitz
 import pytest
 
+# pyrefly: ignore [missing-import]
 from src.parsing.notes_parser import normalize_key, parse_notes_region
+# pyrefly: ignore [missing-import]
 from src.tables.anchor_detection import find_schedule_anchors, ScheduleAnchor
 
 
